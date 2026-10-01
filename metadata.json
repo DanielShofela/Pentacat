@@ -1,0 +1,6 @@
+{
+  "name": "PENTA GAD Distribution",
+  "description": "Plateforme e-commerce officielle de PENTA GAD Distribution : Électroménager, TV, Climatisation et Mobilier en Côte d'Ivoire avec Achat classique, Paiement échelonné et Tontine rotative.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

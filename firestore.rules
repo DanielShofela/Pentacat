@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'pentagad.distribution@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Health / connection test doc
+    match /test/{testId} {
+      allow read, write: if true;
+    }
+
+    // Categories
+    match /categories/{categoryId} {
+      allow read: if isValidId(categoryId);
+      allow write: if isValidId(categoryId) && isAdmin();
+    }
+
+    // Products
+    match /products/{productId} {
+      allow read: if isValidId(productId);
+      allow write: if isValidId(productId) && isAdmin();
+    }
+
+    // Customers
+    match /customers/{customerId} {
+      allow get: if isValidId(customerId) && (isAdmin() || (isSignedIn() && request.auth.uid == resource.data.uid));
+      allow list: if isAdmin();
+      allow create: if isValidId(customerId) && isSignedIn() && incoming().uid == request.auth.uid;
+      allow update: if isValidId(customerId) && isSignedIn() && (isAdmin() || resource.data.uid == request.auth.uid);
+      allow delete: if isValidId(customerId) && isAdmin();
+    }
+
+    // Orders (Classic Purchase)
+    match /orders/{orderId} {
+      allow create: if isValidId(orderId) && incoming().totalAmount > 0;
+      allow get: if isValidId(orderId) && (isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow update, delete: if isValidId(orderId) && isAdmin();
+    }
+
+    // Installment Contracts
+    match /installmentContracts/{contractId} {
+      allow get: if isValidId(contractId) && (isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow create: if isValidId(contractId) && isSignedIn() && (isAdmin() || incoming().customerId == request.auth.uid);
+      allow update, delete: if isValidId(contractId) && isAdmin();
+    }
+
+    // Installment Payments
+    match /installmentPayments/{paymentId} {
+      allow get: if isValidId(paymentId) && (isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow create: if isValidId(paymentId) && isSignedIn() && (isAdmin() || incoming().customerId == request.auth.uid);
+      allow update, delete: if isValidId(paymentId) && isAdmin();
+    }
+
+    // Tontine Groups
+    match /tontineGroups/{groupId} {
+      allow read: if isValidId(groupId);
+      allow write: if isValidId(groupId) && isAdmin();
+    }
+
+    // Tontine Members
+    match /tontineMembers/{memberId} {
+      allow read: if isValidId(memberId) && isSignedIn();
+      allow create: if isValidId(memberId) && isSignedIn() && (isAdmin() || incoming().customerId == request.auth.uid);
+      allow update, delete: if isValidId(memberId) && isAdmin();
+    }
+
+    // Tontine Contributions
+    match /tontineContributions/{contributionId} {
+      allow get: if isValidId(contributionId) && (isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow create: if isValidId(contributionId) && isSignedIn() && (isAdmin() || incoming().customerId == request.auth.uid);
+      allow update, delete: if isValidId(contributionId) && isAdmin();
+    }
+
+    // Tontine Rotations
+    match /tontineRotations/{rotationId} {
+      allow read: if isValidId(rotationId) && isSignedIn();
+      allow write: if isValidId(rotationId) && isAdmin();
+    }
+
+    // Deliveries
+    match /deliveries/{deliveryId} {
+      allow get: if isValidId(deliveryId) && (isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
+      allow write: if isValidId(deliveryId) && isAdmin();
+    }
+
+    // Admin Lookups
+    match /admins/{adminUid} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /adminUsers/{adminId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /activityLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+  }
+}

@@ -1,0 +1,334 @@
+{
+  "entities": {
+    "Category": {
+      "title": "Category",
+      "description": "Product categories in PENTA GAD Distribution",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 100 },
+        "slug": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 500 },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "icon": { "type": "string", "maxLength": 50 },
+        "displayOrder": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "slug", "isActive"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Products available in PENTA GAD catalog for direct purchase, installment, or tontine",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 200 },
+        "slug": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "categoryId": { "type": "string", "maxLength": 64 },
+        "categoryName": { "type": "string", "maxLength": 100 },
+        "brand": { "type": "string", "maxLength": 100 },
+        "model": { "type": "string", "maxLength": 100 },
+        "priceCash": { "type": "number" },
+        "priceInstallment": { "type": "number" },
+        "priceTontine": { "type": "number" },
+        "stock": { "type": "number" },
+        "images": { "type": "array" },
+        "features": { "type": "array" },
+        "warrantyMonths": { "type": "number" },
+        "isCashEligible": { "type": "boolean" },
+        "isInstallmentEligible": { "type": "boolean" },
+        "isTontineEligible": { "type": "boolean" },
+        "installmentMaxMonths": { "type": "number" },
+        "installmentMinDepositPercent": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "isFeatured": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "categoryId", "priceCash", "stock", "isActive"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer profiles registered or synchronized with Auth",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "uid": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "email": { "type": "string", "maxLength": 150 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "whatsappNumber": { "type": "string", "maxLength": 30 },
+        "city": { "type": "string", "maxLength": 100 },
+        "commune": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 300 },
+        "idCardNumber": { "type": "string", "maxLength": 100 },
+        "isVerified": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "fullName"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Standard classic purchase orders",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "orderNumber": { "type": "string", "maxLength": 32 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 150 },
+        "customerPhone": { "type": "string", "maxLength": 30 },
+        "customerEmail": { "type": "string", "maxLength": 150 },
+        "deliveryAddress": { "type": "string", "maxLength": 300 },
+        "deliveryCity": { "type": "string", "maxLength": 100 },
+        "deliveryCommune": { "type": "string", "maxLength": 100 },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "paymentStatus": { "type": "string", "maxLength": 50 },
+        "orderStatus": { "type": "string", "maxLength": 50 },
+        "source": { "type": "string", "maxLength": 50 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["orderNumber", "customerName", "customerPhone", "items", "totalAmount", "orderStatus"]
+    },
+    "InstallmentContract": {
+      "title": "InstallmentContract",
+      "description": "Installment contracts for progressive payments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "contractNumber": { "type": "string", "maxLength": 32 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 150 },
+        "customerPhone": { "type": "string", "maxLength": 30 },
+        "productId": { "type": "string", "maxLength": 64 },
+        "productName": { "type": "string", "maxLength": 200 },
+        "totalAmount": { "type": "number" },
+        "depositAmount": { "type": "number" },
+        "remainingBalance": { "type": "number" },
+        "monthlyPayment": { "type": "number" },
+        "durationMonths": { "type": "number" },
+        "paidInstallmentsCount": { "type": "number" },
+        "status": { "type": "string", "maxLength": 50 },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "deliveryStatus": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["contractNumber", "customerId", "productId", "totalAmount", "depositAmount", "status"]
+    },
+    "InstallmentPayment": {
+      "title": "InstallmentPayment",
+      "description": "Payments made towards an installment contract",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "contractId": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "reference": { "type": "string", "maxLength": 100 },
+        "receiptUrl": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "maxLength": 50 },
+        "paidAt": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["contractId", "customerId", "amount", "status"]
+    },
+    "TontineGroup": {
+      "title": "TontineGroup",
+      "description": "Rotational savings tontine groups for home appliances",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 200 },
+        "targetProductId": { "type": "string", "maxLength": 64 },
+        "targetProductName": { "type": "string", "maxLength": 200 },
+        "targetProductPrice": { "type": "number" },
+        "frequency": { "type": "string", "maxLength": 50 },
+        "totalPositions": { "type": "number" },
+        "filledPositions": { "type": "number" },
+        "contributionAmount": { "type": "number" },
+        "durationCycles": { "type": "number" },
+        "currentCycle": { "type": "number" },
+        "status": { "type": "string", "maxLength": 50 },
+        "startDate": { "type": "string" },
+        "rulesDescription": { "type": "string", "maxLength": 2000 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "targetProductId", "contributionAmount", "totalPositions", "status"]
+    },
+    "TontineMember": {
+      "title": "TontineMember",
+      "description": "Member participation and allocated position in a tontine group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "groupId": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 150 },
+        "customerPhone": { "type": "string", "maxLength": 30 },
+        "assignedPosition": { "type": "number" },
+        "joinedAt": { "type": "string" },
+        "hasReceivedDelivery": { "type": "boolean" },
+        "status": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["groupId", "customerId", "assignedPosition", "status"]
+    },
+    "TontineContribution": {
+      "title": "TontineContribution",
+      "description": "Individual payment of a tontine cycle contribution",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "groupId": { "type": "string", "maxLength": 64 },
+        "memberId": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "cycleNumber": { "type": "number" },
+        "amount": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "reference": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "maxLength": 50 },
+        "paidAt": { "type": "string" }
+      },
+      "required": ["groupId", "customerId", "cycleNumber", "amount", "status"]
+    },
+    "TontineRotation": {
+      "title": "TontineRotation",
+      "description": "Round schedule and beneficiary assignment for a tontine group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "groupId": { "type": "string", "maxLength": 64 },
+        "cycleNumber": { "type": "number" },
+        "beneficiaryMemberId": { "type": "string", "maxLength": 64 },
+        "beneficiaryCustomerId": { "type": "string", "maxLength": 128 },
+        "beneficiaryName": { "type": "string", "maxLength": 150 },
+        "scheduledDate": { "type": "string" },
+        "deliveryStatus": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["groupId", "cycleNumber", "beneficiaryCustomerId", "status"]
+    },
+    "Delivery": {
+      "title": "Delivery",
+      "description": "Delivery tracking for orders, installment completions, or tontine allocations",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "trackingNumber": { "type": "string", "maxLength": 32 },
+        "sourceType": { "type": "string", "maxLength": 50 },
+        "sourceId": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "recipientName": { "type": "string", "maxLength": 150 },
+        "recipientPhone": { "type": "string", "maxLength": 30 },
+        "city": { "type": "string", "maxLength": 100 },
+        "commune": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 300 },
+        "driverName": { "type": "string", "maxLength": 100 },
+        "driverPhone": { "type": "string", "maxLength": 30 },
+        "status": { "type": "string", "maxLength": 50 },
+        "estimatedDate": { "type": "string" },
+        "deliveredAt": { "type": "string" },
+        "notes": { "type": "string", "maxLength": 500 }
+      },
+      "required": ["trackingNumber", "sourceType", "sourceId", "recipientName", "recipientPhone", "status"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Administrator and operator accounts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 150 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "maxLength": 50 },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role", "isActive"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Audit and activity logs for administrative actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userEmail": { "type": "string", "maxLength": 150 },
+        "action": { "type": "string", "maxLength": 100 },
+        "entityType": { "type": "string", "maxLength": 50 },
+        "entityId": { "type": "string", "maxLength": 64 },
+        "details": { "type": "string", "maxLength": 2000 },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["userId", "action", "entityType", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product category documents"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Product catalog documents"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customer profile documents"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Order records for classic purchases"
+    },
+    "/installmentContracts/{contractId}": {
+      "schema": "InstallmentContract",
+      "description": "Installment credit contracts"
+    },
+    "/installmentPayments/{paymentId}": {
+      "schema": "InstallmentPayment",
+      "description": "Installment payments records"
+    },
+    "/tontineGroups/{groupId}": {
+      "schema": "TontineGroup",
+      "description": "Tontine groups"
+    },
+    "/tontineMembers/{memberId}": {
+      "schema": "TontineMember",
+      "description": "Tontine memberships and assigned slots"
+    },
+    "/tontineContributions/{contributionId}": {
+      "schema": "TontineContribution",
+      "description": "Contributions to tontines"
+    },
+    "/tontineRotations/{rotationId}": {
+      "schema": "TontineRotation",
+      "description": "Rotation and beneficiary assignment schedule"
+    },
+    "/deliveries/{deliveryId}": {
+      "schema": "Delivery",
+      "description": "Logistics and delivery records"
+    },
+    "/adminUsers/{adminId}": {
+      "schema": "AdminUser",
+      "description": "List of administrative users"
+    },
+    "/admins/{adminUid}": {
+      "schema": "AdminUser",
+      "description": "Lookup document for security rules admin verification"
+    },
+    "/activityLogs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "System activity logs"
+    }
+  }
+}
