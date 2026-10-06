@@ -11,19 +11,25 @@
  */
 
 import React from 'react';
+import { CompanySettingsProvider } from './context/CompanySettingsContext';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './context/ToastContext';
 import { AppNavigationProvider } from './context/AppNavigationContext';
 import { MainLayout } from './components/layout/MainLayout';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <AppNavigationProvider>
-          <MainLayout />
-        </AppNavigationProvider>
-      </CartProvider>
-    </AuthProvider>
+    <CompanySettingsProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <CartProvider>
+            <AppNavigationProvider>
+              <MainLayout />
+            </AppNavigationProvider>
+          </CartProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </CompanySettingsProvider>
   );
 }

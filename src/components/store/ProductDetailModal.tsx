@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { 
-  X, 
   ShoppingBag, 
   CreditCard, 
   Users, 
   ShieldCheck, 
   Truck, 
   Check, 
+  ArrowRight,
   Calculator,
-  ArrowRight
+  MessageCircle
 } from 'lucide-react';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
 import { useAppNavigation } from '../../context/AppNavigationContext';
 import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { formatFCFA } from '../../utils/formatters';
 
 export const ProductDetailModal: React.FC = () => {
@@ -21,11 +24,10 @@ export const ProductDetailModal: React.FC = () => {
     setActiveProductModal, 
     setActiveDomain,
     setSelectedInstallmentProduct,
-    setSelectedTontineGroup,
-    setIsAuthModalOpen
+    setIsCheckoutModalOpen 
   } = useAppNavigation();
   const { addToCart } = useCart();
-  const { user } = useAuth();
+  const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'cash' | 'installment' | 'tontine'>('cash');
   const [selectedMonths, setSelectedMonths] = useState<number>(6);
@@ -41,265 +43,315 @@ export const ProductDetailModal: React.FC = () => {
   const monthlyPayment = Math.round(remainingBalance / selectedMonths);
 
   // Tontine calculation
-  const tontineContribution = Math.round((product.priceTontine || product.priceCash) / 6);
+  const tontineMonthly = Math.round((product.priceTontine || product.priceCash) / 6);
 
   const handleAddToCart = () => {
     addToCart(product, 1);
+    showToast({
+      type: 'success',
+      title: 'Ajouté au panier',
+      message: `${product.name} (1x)`,
+      productImage: product.images[0],
+    });
     setActiveProductModal(null);
   };
 
-  const handleSelectInstallment = () => {
+  const handleDirectWhatsAppOrder = () => {
+    addToCart(product, 1);
+    setActiveProductModal(null);
+    setIsCheckoutModalOpen(true);
+  };
+
+  const handleGoToInstallment = () => {
     setSelectedInstallmentProduct(product);
     setActiveProductModal(null);
     setActiveDomain('installment');
   };
 
-  const handleSelectTontine = () => {
+  const handleGoToTontine = () => {
     setActiveProductModal(null);
     setActiveDomain('tontine');
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-200">
+    <Modal
+      isOpen={Boolean(activeProductModal)}
+      onClose={() => setActiveProductModal(null)}
+      maxWidth="3xl"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         
-        {/* Header */}
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">
-              {product.categoryName}
-            </span>
-            <span className="text-xs text-slate-500">• {product.brand}</span>
+        {/* Left Column: Product Photo & Specifications */}
+        <div className="space-y-4">
+          <div className="aspect-4/3 w-full rounded-2xl overflow-hidden bg-slate-50 border border-slate-200/80">
+            <img
+              src={
+                product.images[0] ||
+                'https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&w=800&q=80'
+              }
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
           </div>
-          <button
-            onClick={() => setActiveProductModal(null)}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          <div>
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+              <span>{product.brand}</span>
+              <span>·</span>
+              <span>{product.categoryName}</span>
+              {product.model && (
+                <>
+                  <span>·</span>
+                  <span>Modèle : {product.model}</span>
+                </>
+              )}
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 mt-1 leading-snug">
+              {product.name}
+            </h2>
+          </div>
+
+          <p className="text-xs text-slate-600 leading-relaxed">
+            {product.description}
+          </p>
+
+          {/* Key Points */}
+          {product.features && product.features.length > 0 && (
+            <div className="pt-2 border-t border-slate-100 space-y-1.5">
+              <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wider block">
+                Caractéristiques certifiées :
+              </span>
+              <ul className="space-y-1">
+                {product.features.map((feat, i) => (
+                  <li key={i} className="text-xs text-slate-600 flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>{feat}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Reassurance pills */}
+          <div className="flex flex-wrap gap-2 pt-1 text-xs">
+            {product.warrantyMonths && (
+              <Badge variant="gold" dot>
+                Garantie {product.warrantyMonths / 12} an(s) constructeur
+              </Badge>
+            )}
+            <Badge variant="neutral">Livraison Abidjan & Intérieur</Badge>
+          </div>
         </div>
 
-        {/* Body */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[80vh] overflow-y-auto">
-          
-          {/* Left: Product Images & Specs */}
-          <div className="space-y-4">
-            <div className="aspect-4/3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
-              <img
-                src={product.images[0] || 'https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&w=800&q=80'}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
+        {/* Right Column: 3 Purchase Modalities Selection */}
+        <div className="bg-slate-50/70 p-5 rounded-2xl border border-slate-200/80 space-y-5">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+              Formule d'acquisition :
+            </span>
 
-            <div>
-              <h3 className="font-bold text-slate-900 text-base leading-snug">{product.name}</h3>
-              {product.model && (
-                <p className="text-xs text-slate-500 mt-0.5">Modèle : {product.model}</p>
-              )}
-            </div>
+            {/* Segmented Control */}
+            <div className="flex gap-1 bg-slate-200/70 p-1 rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setActiveTab('cash')}
+                className={`flex-1 py-2 px-1 rounded-lg transition-all flex flex-col items-center gap-0.5 ${
+                  activeTab === 'cash'
+                    ? 'bg-white text-slate-950 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-slate-900" />
+                <span>Comptant</span>
+              </button>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {product.description}
-            </p>
-
-            {product.features && product.features.length > 0 && (
-              <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wide">Points forts :</h5>
-                <ul className="space-y-1">
-                  {product.features.map((feat, i) => (
-                    <li key={i} className="text-xs text-slate-600 flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3 pt-2 text-xs text-slate-500">
-              {product.warrantyMonths && (
-                <span className="flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Garantie {product.warrantyMonths / 12} an(s)
-                </span>
-              )}
-              <span className="flex items-center gap-1 text-blue-700 font-medium bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
-                <Truck className="w-3.5 h-3.5" />
-                Livraison Abidjan & Intérieur
-              </span>
-            </div>
-          </div>
-
-          {/* Right: The 3 Coexisting Purchase Modalities */}
-          <div className="flex flex-col justify-between space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-            <div>
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                Choisissez votre formule d'acquisition :
-              </h4>
-
-              {/* Tabs for 3 systems */}
-              <div className="grid grid-cols-3 gap-1 bg-slate-200 p-1 rounded-xl text-xs font-semibold">
+              {product.isInstallmentEligible !== false && (
                 <button
-                  onClick={() => setActiveTab('cash')}
-                  className={`py-2 px-2 rounded-lg transition-all flex flex-col items-center gap-0.5 ${
-                    activeTab === 'cash' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <ShoppingBag className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Achat Direct</span>
-                </button>
-                <button
+                  type="button"
                   onClick={() => setActiveTab('installment')}
-                  className={`py-2 px-2 rounded-lg transition-all flex flex-col items-center gap-0.5 ${
-                    activeTab === 'installment' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`flex-1 py-2 px-1 rounded-lg transition-all flex flex-col items-center gap-0.5 ${
+                    activeTab === 'installment'
+                      ? 'bg-white text-slate-950 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+                  <CreditCard className="w-3.5 h-3.5 text-[#C5A059]" />
                   <span>Échelonné</span>
                 </button>
+              )}
+
+              {product.isTontineEligible && (
                 <button
+                  type="button"
                   onClick={() => setActiveTab('tontine')}
-                  className={`py-2 px-2 rounded-lg transition-all flex flex-col items-center gap-0.5 ${
-                    activeTab === 'tontine' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  className={`flex-1 py-2 px-1 rounded-lg transition-all flex flex-col items-center gap-0.5 ${
+                    activeTab === 'tontine'
+                      ? 'bg-white text-slate-950 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <Users className="w-3.5 h-3.5 text-purple-600" />
                   <span>Tontine</span>
                 </button>
-              </div>
-
-              {/* Tab Contents */}
-              <div className="mt-4">
-                {/* 1. Cash Purchase Tab */}
-                {activeTab === 'cash' && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                      <span className="text-xs text-slate-500 font-medium">Prix d'achat direct comptant :</span>
-                      <div className="text-2xl font-black text-amber-800 mt-1">
-                        {formatFCFA(product.priceCash)}
-                      </div>
-                      <p className="text-xs text-emerald-700 font-medium mt-1">
-                        ✓ En stock disponible immédiatement pour livraison
-                      </p>
-                    </div>
-
-                    <div className="text-xs text-slate-500 space-y-1.5">
-                      <p>• Aucun compte requis pour commander en direct.</p>
-                      <p>• Paiement sécurisé par Wave, Orange Money, MTN ou à la livraison.</p>
-                      <p>• Facture normalisée et bordereau de garantie fournis.</p>
-                    </div>
-
-                    <button
-                      onClick={handleAddToCart}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-xl shadow-md transition-all"
-                    >
-                      <ShoppingBag className="w-4 h-4" />
-                      <span>Ajouter au panier</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* 2. Installment Tab */}
-                {activeTab === 'installment' && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-3">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500 font-medium">Prix échelonné total :</span>
-                        <span className="font-bold text-slate-900">{formatFCFA(product.priceInstallment || product.priceCash)}</span>
-                      </div>
-
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <span className="text-slate-600">Acompte initial requis ({minDepositPercent}%) :</span>
-                        <span className="font-black text-emerald-700 text-sm">{formatFCFA(depositAmount)}</span>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-slate-600">Durée d'échelonnement :</label>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {[3, 6, 8].map((m) => (
-                            <button
-                              key={m}
-                              onClick={() => setSelectedMonths(m)}
-                              className={`py-1 text-xs font-semibold rounded border ${
-                                selectedMonths === m ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-700 border-slate-300'
-                              }`}
-                            >
-                              {m} mois
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-200 text-xs flex justify-between items-center">
-                        <span className="text-emerald-900 font-medium">Mensualité estimée :</span>
-                        <span className="font-black text-emerald-700 text-sm">{formatFCFA(monthlyPayment)} / mois</span>
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-slate-500 space-y-1">
-                      <p>• Contrat établi avec pièce d'identité (CNI / Passeport).</p>
-                      <p>• Suivi automatisé de vos règlements dans l'Espace Client.</p>
-                      <p>• Livraison déclenchée selon les conditions du contrat.</p>
-                    </div>
-
-                    <button
-                      onClick={handleSelectInstallment}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm rounded-xl shadow-md transition-all"
-                    >
-                      <Calculator className="w-4 h-4" />
-                      <span>Simuler & Demander l'échelonnement</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-
-                {/* 3. Tontine Tab */}
-                {activeTab === 'tontine' && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-500 font-medium">Valeur produit tontine :</span>
-                        <span className="font-bold text-slate-900">{formatFCFA(product.priceTontine || product.priceCash)}</span>
-                      </div>
-
-                      <div className="p-2.5 bg-purple-50 rounded-lg border border-purple-200 text-xs flex justify-between items-center">
-                        <span className="text-purple-900 font-medium">Cotisation mensuelle indicative :</span>
-                        <span className="font-black text-purple-700 text-sm">{formatFCFA(tontineContribution)} / mois</span>
-                      </div>
-
-                      <p className="text-[11px] text-purple-900 font-medium">
-                        Groupe rotatif de 6 à 10 membres supervisé par PENTA GAD Distribution.
-                      </p>
-                    </div>
-
-                    <div className="text-xs text-slate-500 space-y-1">
-                      <p>• Aucun intérêt ni frais cachés.</p>
-                      <p>• Tirage au sort transparent ou choix de position à l'adhésion.</p>
-                      <p>• Livraison de votre équipement neuf sous garantie à votre tour.</p>
-                    </div>
-
-                    <button
-                      onClick={handleSelectTontine}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-purple-700 hover:bg-purple-800 text-white font-bold text-sm rounded-xl shadow-md transition-all"
-                    >
-                      <Users className="w-4 h-4" />
-                      <span>Voir les groupes de tontine ouverts</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="text-[11px] text-center text-slate-400 pt-2 border-t border-slate-200">
-              PENTA GAD Distribution • Showroom Abidjan & Service Commercial
+              )}
             </div>
           </div>
 
+          {/* Tab 1: Direct Cash Purchase */}
+          {activeTab === 'cash' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-2xs space-y-1">
+                <span className="text-[11px] text-slate-400 font-medium">Prix d'achat direct :</span>
+                <div className="text-2xl font-black text-slate-950 tracking-tight">
+                  {formatFCFA(product.priceCash)}
+                </div>
+                <p className="text-[11px] text-emerald-700 font-semibold pt-0.5">
+                  ✓ En stock showroom · Expédition sous 24h
+                </p>
+              </div>
+
+              <div className="text-xs text-slate-500 space-y-1">
+                <p>• Aucun compte obligatoire pour commander.</p>
+                <p>• Règlement sécurisé par Wave, Orange Money, MTN ou à la livraison.</p>
+                <p>• Facture normalisée et bordereau de garantie fournis.</p>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <Button
+                  variant="primary"
+                  fullWidth
+                  size="lg"
+                  onClick={handleAddToCart}
+                  leftIcon={<ShoppingBag className="w-4 h-4 text-[#C5A059]" />}
+                >
+                  Ajouter au panier
+                </Button>
+
+                <Button
+                  variant="outline"
+                  fullWidth
+                  size="lg"
+                  onClick={handleDirectWhatsAppOrder}
+                  className="border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold"
+                  leftIcon={<MessageCircle className="w-4 h-4 text-emerald-600" />}
+                >
+                  Commander sur WhatsApp
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Installment (Échelonné) */}
+          {activeTab === 'installment' && product.isInstallmentEligible !== false && (
+            <div className="space-y-4">
+              <div className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
+                <div className="flex justify-between items-baseline text-xs">
+                  <span className="text-slate-500 font-medium">Prix de référence :</span>
+                  <span className="font-bold text-slate-900">
+                    {formatFCFA(product.priceInstallment || product.priceCash)}
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
+                  <span className="text-slate-600">Acompte initial ({minDepositPercent}%) :</span>
+                  <span className="font-extrabold text-slate-900">{formatFCFA(depositAmount)}</span>
+                </div>
+
+                {/* Duration Picker */}
+                <div className="space-y-1">
+                  <span className="text-[11px] font-semibold text-slate-500">Durée d'étalement :</span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[3, 6, 8].map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setSelectedMonths(m)}
+                        className={`py-1 text-xs font-bold rounded-lg border transition-colors ${
+                          selectedMonths === m
+                            ? 'bg-slate-950 text-white border-slate-950'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {m} mois
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Monthly Payment Result */}
+                <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 flex justify-between items-center text-xs">
+                  <span className="text-slate-600 font-medium">Mensualité estimée :</span>
+                  <span className="font-black text-emerald-800 text-sm">
+                    {formatFCFA(monthlyPayment)} / mois
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-500 space-y-1">
+                <p>• Contrat établi en agence ou en ligne avec pièce d'identité.</p>
+                <p>• Mensualités réglées simplement par Mobile Money.</p>
+              </div>
+
+              <Button
+                variant="primary"
+                fullWidth
+                size="lg"
+                onClick={handleGoToInstallment}
+                leftIcon={<Calculator className="w-4 h-4 text-[#C5A059]" />}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
+              >
+                Payer progressivement
+              </Button>
+            </div>
+          )}
+
+          {/* Tab 3: Tontine Rotative */}
+          {activeTab === 'tontine' && product.isTontineEligible && (
+            <div className="space-y-4">
+              <div className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-2xs space-y-2.5">
+                <div className="flex justify-between items-baseline text-xs">
+                  <span className="text-slate-500 font-medium">Valeur lot tontine :</span>
+                  <span className="font-bold text-slate-900">
+                    {formatFCFA(product.priceTontine || product.priceCash)}
+                  </span>
+                </div>
+
+                <div className="p-2.5 bg-[#FBF7EE] rounded-lg border border-[#E8DAB7] flex justify-between items-center text-xs">
+                  <span className="text-[#9A7426] font-medium">Cotisation mensuelle indicative :</span>
+                  <span className="font-black text-[#9A7426] text-sm">
+                    {formatFCFA(tontineMonthly)} / mois
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-slate-500">
+                  Groupe d'épargne rotatif supervisé et garanti par PENTA GAD Distribution.
+                </p>
+              </div>
+
+              <div className="text-xs text-slate-500 space-y-1">
+                <p>• 0% d'intérêt et 0% de frais d'ouverture.</p>
+                <p>• Livraison à votre tour avec garantie complète.</p>
+              </div>
+
+              <Button
+                variant="primary"
+                fullWidth
+                size="lg"
+                onClick={handleGoToTontine}
+                leftIcon={<Users className="w-4 h-4 text-[#C5A059]" />}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
+              >
+                Participer à une tontine
+              </Button>
+            </div>
+          )}
+
+          <div className="pt-2 text-center text-[11px] text-slate-400 border-t border-slate-200/60">
+            Showroom Abidjan · Assistance téléphonique et WhatsApp officielle
+          </div>
         </div>
 
       </div>
-    </div>
+    </Modal>
   );
 };

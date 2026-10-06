@@ -23,17 +23,24 @@
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 64 },
+        "reference": { "type": "string", "maxLength": 50 },
         "name": { "type": "string", "maxLength": 200 },
         "slug": { "type": "string", "maxLength": 200 },
+        "shortDescription": { "type": "string", "maxLength": 1000 },
+        "fullDescription": { "type": "string", "maxLength": 6000 },
         "description": { "type": "string", "maxLength": 3000 },
         "categoryId": { "type": "string", "maxLength": 64 },
         "categoryName": { "type": "string", "maxLength": 100 },
         "brand": { "type": "string", "maxLength": 100 },
         "model": { "type": "string", "maxLength": 100 },
+        "price": { "type": "number" },
         "priceCash": { "type": "number" },
+        "oldPrice": { "type": "number" },
+        "promotionalPrice": { "type": "number" },
         "priceInstallment": { "type": "number" },
         "priceTontine": { "type": "number" },
         "stock": { "type": "number" },
+        "status": { "type": "string", "maxLength": 50 },
         "images": { "type": "array" },
         "features": { "type": "array" },
         "warrantyMonths": { "type": "number" },
@@ -47,7 +54,7 @@
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
-      "required": ["name", "categoryId", "priceCash", "stock", "isActive"]
+      "required": ["reference", "name", "categoryId", "price", "stock"]
     },
     "Customer": {
       "title": "Customer",
@@ -107,67 +114,69 @@
         "customerName": { "type": "string", "maxLength": 150 },
         "customerPhone": { "type": "string", "maxLength": 30 },
         "productId": { "type": "string", "maxLength": 64 },
-        "productName": { "type": "string", "maxLength": 200 },
+        "productSnapshot": { "type": "object" },
         "totalAmount": { "type": "number" },
-        "depositAmount": { "type": "number" },
-        "remainingBalance": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "remainingAmount": { "type": "number" },
+        "progressPercentage": { "type": "number" },
+        "duration": { "type": "number" },
+        "frequency": { "type": "string", "maxLength": 20 },
         "monthlyPayment": { "type": "number" },
-        "durationMonths": { "type": "number" },
-        "paidInstallmentsCount": { "type": "number" },
-        "status": { "type": "string", "maxLength": 50 },
         "startDate": { "type": "string" },
-        "endDate": { "type": "string" },
-        "deliveryStatus": { "type": "string", "maxLength": 50 },
+        "expectedEndDate": { "type": "string" },
+        "nextPaymentDueDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "active", "completed", "cancelled", "overdue"] },
+        "deliveryStatus": { "type": "string", "enum": ["pending", "scheduled", "shipped", "delivered"] },
+        "deliveryAddress": { "type": "string", "maxLength": 300 },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
-      "required": ["contractNumber", "customerId", "productId", "totalAmount", "depositAmount", "status"]
+      "required": ["customerId", "productId", "totalAmount", "status", "duration"]
     },
     "InstallmentPayment": {
       "title": "InstallmentPayment",
-      "description": "Payments made towards an installment contract",
+      "description": "Individual payments made towards an installment contract",
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 64 },
         "contractId": { "type": "string", "maxLength": 64 },
         "customerId": { "type": "string", "maxLength": 128 },
         "amount": { "type": "number" },
-        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "date": { "type": "string" },
+        "method": { "type": "string", "maxLength": 50 },
         "reference": { "type": "string", "maxLength": 100 },
-        "receiptUrl": { "type": "string", "maxLength": 1000 },
-        "status": { "type": "string", "maxLength": 50 },
-        "paidAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "recordedBy": { "type": "string", "maxLength": 150 },
+        "notes": { "type": "string", "maxLength": 500 },
         "createdAt": { "type": "string" }
       },
-      "required": ["contractId", "customerId", "amount", "status"]
+      "required": ["contractId", "customerId", "amount", "status", "reference"]
     },
     "TontineGroup": {
       "title": "TontineGroup",
-      "description": "Rotational savings tontine groups for home appliances",
+      "description": "Rotational savings tontine groups with configurable member counts and periods",
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 64 },
-        "title": { "type": "string", "maxLength": 200 },
-        "targetProductId": { "type": "string", "maxLength": 64 },
-        "targetProductName": { "type": "string", "maxLength": 200 },
-        "targetProductPrice": { "type": "number" },
-        "frequency": { "type": "string", "maxLength": 50 },
-        "totalPositions": { "type": "number" },
-        "filledPositions": { "type": "number" },
-        "contributionAmount": { "type": "number" },
-        "durationCycles": { "type": "number" },
-        "currentCycle": { "type": "number" },
-        "status": { "type": "string", "maxLength": 50 },
+        "groupCode": { "type": "string", "maxLength": 32 },
+        "name": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "memberCount": { "type": "number" },
+        "rotationPeriodDays": { "type": "number" },
+        "totalDurationDays": { "type": "number" },
+        "contributionFrequency": { "type": "string", "maxLength": 50 },
         "startDate": { "type": "string" },
-        "rulesDescription": { "type": "string", "maxLength": 2000 },
+        "endDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "open", "full", "active", "completed", "cancelled"] },
+        "currentRotationPosition": { "type": "number" },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
-      "required": ["title", "targetProductId", "contributionAmount", "totalPositions", "status"]
+      "required": ["groupCode", "name", "memberCount", "rotationPeriodDays", "totalDurationDays", "status"]
     },
     "TontineMember": {
       "title": "TontineMember",
-      "description": "Member participation and allocated position in a tontine group",
+      "description": "Member participation, distinct product, and allocated position in a tontine group",
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 64 },
@@ -175,30 +184,39 @@
         "customerId": { "type": "string", "maxLength": 128 },
         "customerName": { "type": "string", "maxLength": 150 },
         "customerPhone": { "type": "string", "maxLength": 30 },
-        "assignedPosition": { "type": "number" },
-        "joinedAt": { "type": "string" },
-        "hasReceivedDelivery": { "type": "boolean" },
-        "status": { "type": "string", "maxLength": 50 }
+        "position": { "type": "number" },
+        "productId": { "type": "string", "maxLength": 64 },
+        "productSnapshot": { "type": "object" },
+        "expectedContribution": { "type": "number" },
+        "totalContributed": { "type": "number" },
+        "remainingAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "completed", "overdue", "cancelled"] },
+        "beneficiaryDate": { "type": "string" },
+        "deliveryStatus": { "type": "string", "enum": ["not_eligible", "pending", "scheduled", "shipped", "delivered"] },
+        "joinedAt": { "type": "string" }
       },
-      "required": ["groupId", "customerId", "assignedPosition", "status"]
+      "required": ["groupId", "customerId", "position", "status"]
     },
     "TontineContribution": {
       "title": "TontineContribution",
-      "description": "Individual payment of a tontine cycle contribution",
+      "description": "Individual payment of a tontine contribution (daily, grouped, partial, etc.)",
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 64 },
         "groupId": { "type": "string", "maxLength": 64 },
         "memberId": { "type": "string", "maxLength": 64 },
         "customerId": { "type": "string", "maxLength": 128 },
-        "cycleNumber": { "type": "number" },
         "amount": { "type": "number" },
-        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "date": { "type": "string" },
+        "method": { "type": "string", "maxLength": 50 },
         "reference": { "type": "string", "maxLength": 100 },
-        "status": { "type": "string", "maxLength": 50 },
-        "paidAt": { "type": "string" }
+        "status": { "type": "string", "enum": ["approved", "pending", "rejected"] },
+        "paymentType": { "type": "string", "maxLength": 50 },
+        "recordedBy": { "type": "string", "maxLength": 150 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" }
       },
-      "required": ["groupId", "customerId", "cycleNumber", "amount", "status"]
+      "required": ["groupId", "memberId", "customerId", "amount", "status"]
     },
     "TontineRotation": {
       "title": "TontineRotation",
@@ -207,15 +225,15 @@
       "properties": {
         "id": { "type": "string", "maxLength": 64 },
         "groupId": { "type": "string", "maxLength": 64 },
-        "cycleNumber": { "type": "number" },
-        "beneficiaryMemberId": { "type": "string", "maxLength": 64 },
-        "beneficiaryCustomerId": { "type": "string", "maxLength": 128 },
-        "beneficiaryName": { "type": "string", "maxLength": 150 },
-        "scheduledDate": { "type": "string" },
-        "deliveryStatus": { "type": "string", "maxLength": 50 },
-        "status": { "type": "string", "maxLength": 50 }
+        "position": { "type": "number" },
+        "memberId": { "type": "string", "maxLength": 64 },
+        "memberName": { "type": "string", "maxLength": 150 },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["upcoming", "current", "completed"] },
+        "deliveryStatus": { "type": "string", "maxLength": 50 }
       },
-      "required": ["groupId", "cycleNumber", "beneficiaryCustomerId", "status"]
+      "required": ["groupId", "position", "memberId", "startDate", "endDate", "status"]
     },
     "Delivery": {
       "title": "Delivery",

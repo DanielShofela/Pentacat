@@ -1,58 +1,71 @@
-export type ContractStatus = 
-  | 'draft' 
-  | 'pending_approval' 
-  | 'approved' 
+export type InstallmentContractStatus = 
+  | 'pending' 
   | 'active' 
-  | 'fully_paid' 
-  | 'defaulted' 
-  | 'cancelled';
+  | 'completed' 
+  | 'cancelled' 
+  | 'overdue';
+
+export type InstallmentPaymentStatus = 'pending' | 'approved' | 'rejected';
 
 export type InstallmentDeliveryStatus = 
-  | 'pending_deposit' 
-  | 'approved_for_delivery' 
-  | 'delivered' 
-  | 'returned';
+  | 'pending' 
+  | 'scheduled' 
+  | 'shipped' 
+  | 'delivered';
 
-export type InstallmentPaymentStatus = 'pending' | 'verified' | 'rejected';
+export interface ProductSnapshot {
+  id: string;
+  reference: string;
+  name: string;
+  brand: string;
+  categoryName?: string;
+  imageUrl?: string;
+  cashPrice: number;
+}
 
 export interface InstallmentContract {
   id: string;
-  contractNumber: string; // Ex: CTR-2026-0042
+  contractNumber?: string; // Ex: CTR-2026-0042
   customerId: string;
-  customerName: string;
-  customerPhone: string;
-  customerEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
   productId: string;
-  productName: string;
-  productPrice: number;
-  totalAmount: number; // Prix total avec éventuels frais de dossier
-  depositAmount: number; // Acompte initial versé
-  remainingBalance: number; // Solde restant
-  durationMonths: number; // Ex: 3, 6, 9 mois
-  monthlyPayment: number; // Montant de chaque mensualité
-  paidInstallmentsCount: number;
-  totalInstallmentsCount: number;
-  status: ContractStatus;
-  deliveryStatus: InstallmentDeliveryStatus;
+  productSnapshot: ProductSnapshot;
+  totalAmount: number;
+  amountPaid: number;
+  remainingAmount: number;
+  progressPercentage: number;
+  duration: number; // e.g. 3, 6, 8 months
+  frequency: 'monthly' | 'biweekly';
   startDate: string;
+  expectedEndDate: string;
+  monthlyPayment: number;
   nextPaymentDueDate?: string;
-  endDate?: string;
-  notes?: string;
+  status: InstallmentContractStatus;
+  deliveryStatus?: InstallmentDeliveryStatus;
+  deliveryAddress?: string;
+  deliveryCommune?: string;
+  deliveryNotes?: string;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
+
+  // Compatibility aliases
+  productName?: string;
+  productPrice?: number;
+  remainingBalance?: number;
+  durationMonths?: number;
 }
 
 export interface InstallmentPayment {
   id: string;
   contractId: string;
   customerId: string;
-  installmentIndex: number; // 0 = acompte, 1 = 1ere mensualité, etc.
   amount: number;
-  paymentMethod: 'wave' | 'orange_money' | 'mtn_momo' | 'moov_money' | 'bank_transfer' | 'cash';
-  reference?: string; // Référence de transaction Mobile Money ou reçu
-  receiptUrl?: string;
+  date: string;
+  method: 'wave' | 'orange_money' | 'mtn_momo' | 'moov_money' | 'bank_transfer' | 'cash';
+  reference: string; // Ex: transaction ID Wave/MoMo or official receipt #
   status: InstallmentPaymentStatus;
-  verifiedBy?: string;
-  paidAt: string;
+  recordedBy: string; // 'system' | 'client' | operator email
+  notes?: string;
   createdAt: string;
 }

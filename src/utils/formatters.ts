@@ -44,44 +44,74 @@ export function formatDate(dateString: string | undefined): string {
   }
 }
 
+import { companySettingsService } from '../services/companySettingsService';
+
 export const PENTA_GAD_CONTACTS = {
-  name: 'PENTA GAD Distribution',
-  whatsapp: '2250700000000', // Numéro commercial officiel WhatsApp
-  phoneDisplay: '+225 07 00 00 00 00 / 05 00 00 00 00',
-  email: 'pentagad.distribution@gmail.com',
-  address: 'Abidjan, Côte d\'Ivoire - Showroom & Entrepôt Central',
-  openingHours: 'Lun - Sam : 08h00 - 18h30',
+  get name() {
+    return companySettingsService.getSettings().name;
+  },
+  get whatsapp() {
+    return companySettingsService.getSettings().whatsappNumber;
+  },
+  get phoneDisplay() {
+    return companySettingsService.getSettings().phoneDisplay;
+  },
+  get email() {
+    return companySettingsService.getSettings().email;
+  },
+  get address() {
+    return companySettingsService.getSettings().address;
+  },
+  get openingHours() {
+    return companySettingsService.getSettings().openingHours;
+  },
 };
 
 export function generateWhatsAppOrderMessage(params: {
-  orderNumber: string;
+  orderNumber?: string;
   customerName: string;
   customerPhone: string;
-  deliveryCity: string;
-  deliveryCommune?: string;
-  items: Array<{ productName: string; quantity: number; unitPrice: number }>;
+  deliveryCity?: string;
+  deliveryCommune: string;
+  deliveryAddress: string;
+  notes?: string;
+  items: Array<{
+    productName: string;
+    productReference?: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice?: number;
+  }>;
   totalAmount: number;
-  deliveryFee: number;
-  paymentMethod: string;
+  deliveryFee?: number;
+  paymentMethod?: string;
 }): string {
-  let msg = `*NOUVELLE COMMANDE PENTA GAD DISTRIBUTION*\n`;
-  msg += `*Réf:* ${params.orderNumber}\n\n`;
-  msg += `👤 *Client:* ${params.customerName}\n`;
-  msg += `📞 *Téléphone:* ${params.customerPhone}\n`;
-  msg += `📍 *Livraison:* ${params.deliveryCity}${params.deliveryCommune ? ' - ' + params.deliveryCommune : ''}\n\n`;
-  msg += `🛍️ *Articles commandés:*\n`;
-  
+  let msg = `Bonjour PENTA GAD Distribution,\n\nJe souhaite commander :\n\n`;
+
   params.items.forEach((item, index) => {
-    msg += `${index + 1}. ${item.productName} (x${item.quantity}) : ${formatFCFA(item.unitPrice * item.quantity)}\n`;
+    msg += `Produit : ${item.productName}\n`;
+    if (item.productReference) {
+      msg += `Référence : ${item.productReference}\n`;
+    }
+    msg += `Quantité : ${item.quantity}\n`;
+    const itemPrice = item.totalPrice || item.unitPrice * item.quantity;
+    msg += `Prix : ${formatFCFA(itemPrice)}\n\n`;
   });
 
-  msg += `\n💵 *Sous-total:* ${formatFCFA(params.totalAmount)}`;
-  if (params.deliveryFee > 0) {
-    msg += `\n🚚 *Frais de livraison:* ${formatFCFA(params.deliveryFee)}`;
+  const grandTotal = params.totalAmount + (params.deliveryFee || 0);
+  msg += `Total : ${formatFCFA(grandTotal)}\n\n`;
+
+  msg += `Nom : ${params.customerName}\n`;
+  msg += `Téléphone : ${params.customerPhone}\n`;
+  msg += `Commune : ${params.deliveryCommune || params.deliveryCity || 'Abidjan'}\n`;
+  msg += `Adresse : ${params.deliveryAddress}\n`;
+
+  if (params.notes && params.notes.trim()) {
+    msg += `Informations complémentaires : ${params.notes.trim()}\n`;
   }
-  msg += `\n💰 *TOTAL À PAYER:* ${formatFCFA(params.totalAmount + params.deliveryFee)}\n`;
-  msg += `💳 *Mode de règlement:* ${params.paymentMethod}\n\n`;
-  msg += `Bonjour PENTA GAD, je souhaite finaliser et confirmer la livraison de cette commande. Merci !`;
+
+  msg += `\nMerci.`;
 
   return msg;
 }
+

@@ -7,3 +7,4 @@ export * from './tontine';
 export * from './delivery';
 export * from './admin';
 export * from './cart';
+export * from './settings';

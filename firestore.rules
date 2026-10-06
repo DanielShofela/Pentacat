@@ -35,19 +35,27 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Categories
+    // Company Settings (Publicly readable WhatsApp/contact, editable by admin)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isValidId(settingId) && isAdmin();
+    }
+
+    // Categories (Publicly readable)
     match /categories/{categoryId} {
-      allow read: if isValidId(categoryId);
+      allow get: if isValidId(categoryId);
+      allow list: if true;
       allow write: if isValidId(categoryId) && isAdmin();
     }
 
-    // Products
+    // Products (Publicly readable catalog, writable by admin)
     match /products/{productId} {
-      allow read: if isValidId(productId);
+      allow get: if isValidId(productId);
+      allow list: if true;
       allow write: if isValidId(productId) && isAdmin();
     }
 
-    // Customers
+    // Customers (Private profile)
     match /customers/{customerId} {
       allow get: if isValidId(customerId) && (isAdmin() || (isSignedIn() && request.auth.uid == resource.data.uid));
       allow list: if isAdmin();
@@ -68,7 +76,11 @@ service cloud.firestore {
     match /installmentContracts/{contractId} {
       allow get: if isValidId(contractId) && (isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid));
       allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
-      allow create: if isValidId(contractId) && isSignedIn() && (isAdmin() || incoming().customerId == request.auth.uid);
+      allow create: if isValidId(contractId) && isSignedIn() && (isAdmin() || (
+        incoming().customerId == request.auth.uid &&
+        incoming().amountPaid == 0 &&
+        incoming().status == 'pending'
+      ));
       allow update, delete: if isValidId(contractId) && isAdmin();
     }
 
@@ -76,13 +88,19 @@ service cloud.firestore {
     match /installmentPayments/{paymentId} {
       allow get: if isValidId(paymentId) && (isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid));
       allow list: if isAdmin() || (isSignedIn() && resource.data.customerId == request.auth.uid);
-      allow create: if isValidId(paymentId) && isSignedIn() && (isAdmin() || incoming().customerId == request.auth.uid);
+      allow create: if isValidId(paymentId) && isSignedIn() && (
+        isAdmin() || (
+          incoming().customerId == request.auth.uid &&
+          incoming().status == 'pending'
+        )
+      );
       allow update, delete: if isValidId(paymentId) && isAdmin();
     }
 
-    // Tontine Groups
+    // Tontine Groups (Publicly readable)
     match /tontineGroups/{groupId} {
-      allow read: if isValidId(groupId);
+      allow get: if isValidId(groupId);
+      allow list: if true;
       allow write: if isValidId(groupId) && isAdmin();
     }
 

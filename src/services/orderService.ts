@@ -1,8 +1,9 @@
-import { collection, doc, setDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, updateDoc, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { handleFirestoreError, OperationType } from '../firebase/errorHandler';
-import { Order } from '../types';
-import { generateWhatsAppOrderMessage, PENTA_GAD_CONTACTS, sanitizePhoneForWhatsApp } from '../utils/formatters';
+import { Order, OrderStatus } from '../types';
+import { generateWhatsAppOrderMessage } from '../utils/formatters';
+import { companySettingsService } from './companySettingsService';
 
 const ORDERS_COLLECTION = 'orders';
 
@@ -31,7 +32,7 @@ export const orderService = {
       await setDoc(doc(db, ORDERS_COLLECTION, id), newOrder);
     } catch (error) {
       console.warn('Error saving order to Firestore (continuing with WhatsApp generation):', error);
-      // Even if Firestore write is blocked, user should still be able to complete purchase via WhatsApp
+      // Even if Firestore write is blocked or network is offline, user is NEVER blocked from completing purchase via WhatsApp
     }
 
     const message = generateWhatsAppOrderMessage({
@@ -39,20 +40,49 @@ export const orderService = {
       customerName: newOrder.customerName,
       customerPhone: newOrder.customerPhone,
       deliveryCity: newOrder.deliveryCity,
-      deliveryCommune: newOrder.deliveryCommune,
-      items: newOrder.items,
+      deliveryCommune: newOrder.deliveryCommune || newOrder.deliveryCity,
+      deliveryAddress: newOrder.deliveryAddress,
+      notes: newOrder.notes,
+      items: newOrder.items.map(item => ({
+        productName: item.productName,
+        productReference: item.productReference,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+      })),
       totalAmount: newOrder.totalAmount,
       deliveryFee: newOrder.deliveryFee,
       paymentMethod: newOrder.paymentMethod,
     });
 
-    const cleanDestPhone = sanitizePhoneForWhatsApp(PENTA_GAD_CONTACTS.whatsapp);
-    const whatsappUrl = `https://wa.me/${cleanDestPhone}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = companySettingsService.buildWhatsAppUrl(message);
 
     return {
       order: newOrder,
       whatsappUrl,
     };
+  },
+
+  async markOrderAsWhatsAppSent(orderId: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, ORDERS_COLLECTION, orderId), {
+        orderStatus: 'whatsapp_sent',
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn('Could not update order status to whatsapp_sent:', err);
+    }
+  },
+
+  async updateOrderStatus(orderId: string, orderStatus: OrderStatus): Promise<void> {
+    try {
+      await updateDoc(doc(db, ORDERS_COLLECTION, orderId), {
+        orderStatus,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `${ORDERS_COLLECTION}/${orderId}`);
+    }
   },
 
   async getCustomerOrders(customerId: string): Promise<Order[]> {
@@ -62,6 +92,18 @@ export const orderService = {
       return snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
     } catch (error) {
       handleFirestoreError(error, OperationType.LIST, ORDERS_COLLECTION);
+    }
+  },
+
+  async getAllOrders(): Promise<Order[]> {
+    try {
+      const snap = await getDocs(collection(db, ORDERS_COLLECTION));
+      const orders = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+      // Sort newest first
+      return orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } catch (error) {
+      console.warn('Could not load all orders:', error);
+      return [];
     }
   }
 };

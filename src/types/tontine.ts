@@ -1,33 +1,94 @@
-export type TontineGroupStatus = 'open' | 'active' | 'completed' | 'cancelled';
-export type TontineFrequency = 'weekly' | 'bi-weekly' | 'monthly';
-export type TontineMemberStatus = 'pending' | 'active' | 'completed' | 'defaulted';
-export type TontineContributionStatus = 'pending' | 'validated' | 'late';
+export type TontineGroupStatus = 
+  | 'draft' 
+  | 'open' 
+  | 'full' 
+  | 'active' 
+  | 'completed' 
+  | 'cancelled';
+
+export type TontineMemberStatus = 
+  | 'active' 
+  | 'completed' 
+  | 'overdue' 
+  | 'cancelled';
+
+export type TontineRotationStatus = 
+  | 'upcoming' 
+  | 'current' 
+  | 'completed';
+
+export type TontineContributionStatus = 
+  | 'approved' 
+  | 'pending' 
+  | 'rejected';
+
+export type TontineDeliveryStatus = 
+  | 'not_eligible' 
+  | 'pending' 
+  | 'scheduled' 
+  | 'shipped' 
+  | 'delivered';
+
+export type TontineContributionFrequency = 
+  | 'daily' 
+  | 'per_period' 
+  | 'monthly';
+
+export type TontineContributionType = 
+  | 'daily' 
+  | 'grouped' 
+  | 'partial' 
+  | 'regularization' 
+  | 'late';
+
+export interface TontineMemberProductSnapshot {
+  id: string;
+  reference: string;
+  name: string;
+  brand: string;
+  cashPrice: number;
+  imageUrl?: string;
+}
 
 export interface TontineGroup {
   id: string;
-  code: string; // Ex: TNT-FRIG-01
-  title: string;
+  groupCode: string; // Ex: TG-001, TG-002, TG-003
+  name: string;
   description?: string;
-  targetProductId: string;
-  targetProductName: string;
-  targetProductPrice: number;
+  
+  // Product configuration (support both single product or custom per-member product)
+  productId?: string;
+  targetProductId?: string;
+  targetProductName?: string;
+  targetProductPrice?: number;
   targetProductImage?: string;
-  
-  frequency: TontineFrequency;
-  totalPositions: number; // Ex: 5 ou 10 membres
-  filledPositions: number;
-  contributionAmount: number; // Montant par cotisation (FCFA)
-  totalTargetAmount: number; // Montant total du lot
-  
-  durationCycles: number;
-  currentCycle: number;
+  allowCustomProducts?: boolean;
+
+  // Configurable parameters (NEVER hardcoded)
+  memberCount: number; // default 10
+  rotationPeriodDays: number; // default 10
+  totalDurationDays: number; // default 110
+  contributionFrequency: TontineContributionFrequency; // default 'daily' or 'per_period'
+
+  startDate: string;
+  endDate: string;
   status: TontineGroupStatus;
-  
-  startDate?: string;
-  estimatedEndDate?: string;
-  rulesDescription?: string;
+  currentRotationPosition?: number; // 1..memberCount
+
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
+
+  // Backward compatibility aliases
+  code?: string;
+  title?: string;
+  totalPositions?: number;
+  filledPositions?: number;
+  contributionAmount?: number;
+  totalTargetAmount?: number;
+  durationCycles?: number;
+  currentCycle?: number;
+  frequency?: string;
+  rulesDescription?: string;
 }
 
 export interface TontineMember {
@@ -36,11 +97,44 @@ export interface TontineMember {
   customerId: string;
   customerName: string;
   customerPhone: string;
-  assignedPosition: number; // Numéro d'ordre de tirage / de rotation (ex: tour 1, tour 2...)
-  joinedAt: string;
-  hasReceivedDelivery: boolean;
-  deliveryDate?: string;
+  customerWhatsApp?: string;
+  
+  position: number; // Unique 1..memberCount
+  productId: string;
+  productSnapshot: TontineMemberProductSnapshot;
+  
+  expectedContribution: number; // Total expected or per-cycle
+  dailyAmount?: number;
+  totalContributed: number;
+  remainingAmount: number;
+  
   status: TontineMemberStatus;
+  beneficiaryDate: string; // Calculated expected date
+  deliveryStatus: TontineDeliveryStatus;
+  deliveryAddress?: string;
+  deliveryCommune?: string;
+  
+  joinedAt: string;
+  updatedAt?: string;
+
+  // Backward compatibility aliases
+  assignedPosition?: number;
+  hasReceivedDelivery?: boolean;
+}
+
+export interface TontineRotation {
+  id: string;
+  groupId: string;
+  position: number;
+  memberId: string;
+  memberName: string;
+  customerId?: string;
+  productId?: string;
+  productName?: string;
+  startDate: string;
+  endDate: string;
+  status: TontineRotationStatus;
+  deliveryStatus?: TontineDeliveryStatus;
 }
 
 export interface TontineContribution {
@@ -48,23 +142,18 @@ export interface TontineContribution {
   groupId: string;
   memberId: string;
   customerId: string;
-  cycleNumber: number;
   amount: number;
-  paymentMethod: 'wave' | 'orange_money' | 'mtn_momo' | 'moov_money' | 'cash';
-  reference?: string;
+  date: string;
+  method: 'wave' | 'orange_money' | 'mtn_momo' | 'moov_money' | 'cash' | 'bank_transfer';
+  reference: string;
   status: TontineContributionStatus;
-  paidAt: string;
-  verifiedAt?: string;
-}
+  recordedBy: string; // 'client' | admin email / operator
+  paymentType: TontineContributionType;
+  notes?: string;
+  createdAt: string;
 
-export interface TontineRotation {
-  id: string;
-  groupId: string;
-  cycleNumber: number;
-  beneficiaryMemberId: string;
-  beneficiaryCustomerId: string;
-  beneficiaryName: string;
-  scheduledDate: string;
-  deliveryStatus: 'pending' | 'in_transit' | 'delivered';
-  status: 'upcoming' | 'current' | 'completed';
+  // Backward compatibility aliases
+  cycleNumber?: number;
+  paymentMethod?: string;
+  paidAt?: string;
 }

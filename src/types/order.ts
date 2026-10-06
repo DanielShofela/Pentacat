@@ -1,9 +1,10 @@
-export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus = 'pending' | 'whatsapp_sent' | 'confirmed' | 'processing' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'deposit_paid' | 'paid' | 'refunded';
 export type PaymentMethod = 'wave' | 'orange_money' | 'mtn_momo' | 'moov_money' | 'cash_on_delivery' | 'bank_transfer';
 
 export interface OrderItem {
   productId: string;
+  productReference?: string;
   productName: string;
   unitPrice: number;
   quantity: number;

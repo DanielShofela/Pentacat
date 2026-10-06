@@ -24,26 +24,47 @@ export const customerService = {
       if (existing) {
         return existing;
       }
+      const displayName = user.displayName || 'Client PENTA GAD';
+      const phone = user.phoneNumber || '';
       const newCustomer: Customer = {
         id: user.uid,
         uid: user.uid,
-        fullName: user.displayName || 'Client PENTA GAD',
+        nom: displayName,
+        fullName: displayName,
         email: user.email || '',
-        phone: user.phoneNumber || '',
+        téléphone: phone,
+        phone: phone,
+        whatsapp: phone,
+        whatsappNumber: phone,
+        commune: 'Cocody',
+        adresse: 'Abidjan',
+        address: 'Abidjan',
         city: 'Abidjan',
+        statut: 'active',
+        status: 'active',
         createdAt: new Date().toISOString(),
       };
       await setDoc(doc(db, CUSTOMERS_COLLECTION, user.uid), newCustomer);
       return newCustomer;
     } catch (error) {
       console.warn('Customer profile sync notice:', error);
+      const displayName = user.displayName || 'Client PENTA GAD';
       return {
         id: user.uid,
         uid: user.uid,
-        fullName: user.displayName || 'Client PENTA GAD',
+        nom: displayName,
+        fullName: displayName,
         email: user.email || '',
+        téléphone: user.phoneNumber || '',
         phone: user.phoneNumber || '',
+        whatsapp: user.phoneNumber || '',
+        whatsappNumber: user.phoneNumber || '',
+        commune: 'Cocody',
+        adresse: 'Abidjan',
+        address: 'Abidjan',
         city: 'Abidjan',
+        statut: 'active',
+        status: 'active',
         createdAt: new Date().toISOString(),
       };
     }
@@ -51,7 +72,18 @@ export const customerService = {
 
   async updateCustomer(uid: string, updates: Partial<Customer>): Promise<void> {
     try {
-      await setDoc(doc(db, CUSTOMERS_COLLECTION, uid), { ...updates, updatedAt: new Date().toISOString() }, { merge: true });
+      const sanitizedUpdates: Partial<Customer> = { ...updates };
+      if (updates.nom && !updates.fullName) sanitizedUpdates.fullName = updates.nom;
+      if (updates.fullName && !updates.nom) sanitizedUpdates.nom = updates.fullName;
+      if (updates.phone && !updates.téléphone) sanitizedUpdates.téléphone = updates.phone;
+      if (updates.téléphone && !updates.phone) sanitizedUpdates.phone = updates.téléphone;
+      if (updates.whatsapp && !updates.whatsappNumber) sanitizedUpdates.whatsappNumber = updates.whatsapp;
+      if (updates.adresse && !updates.address) sanitizedUpdates.address = updates.adresse;
+
+      await setDoc(doc(db, CUSTOMERS_COLLECTION, uid), { 
+        ...sanitizedUpdates, 
+        updatedAt: new Date().toISOString() 
+      }, { merge: true });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `${CUSTOMERS_COLLECTION}/${uid}`);
     }
